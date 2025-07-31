@@ -60,6 +60,7 @@ class UpdateSource:
         self.now = None
 
     async def visit_page(self, channel_names: list[str] = None):
+        # 处理不同类型的数据
         tasks_config = [
             ("hotel_fofa", get_channels_by_fofa, "hotel_fofa_result"),
             ("multicast", get_channels_by_multicast, "multicast_result"),
@@ -204,6 +205,10 @@ class UpdateSource:
             print("Update cancelled!")
 
     async def start(self, callback=None):
+        """
+        程序入口
+        :param callback: gui程序使用
+        """
         def default_callback(self, *args, **kwargs):
             pass
 

@@ -118,9 +118,12 @@ def get_channel_items() -> CategoryChannelData:
     channels = defaultdict(lambda: defaultdict(list))
     live_data = None
     hls_data = None
+
+    # 本地播放代理
     if config.open_rtmp:
         live_data = get_name_uri_from_dir(constants.live_path)
         hls_data = get_name_uri_from_dir(constants.hls_path)
+
     local_data = get_name_urls_from_file(config.local_file, format_name_flag=True)
     whitelist = get_name_urls_from_file(constants.whitelist_path)
     whitelist_urls = get_urls_from_file(constants.whitelist_path)
@@ -128,6 +131,7 @@ def get_channel_items() -> CategoryChannelData:
     if whitelist_len:
         print(f"Found {whitelist_len} channel in whitelist")
 
+    # 处理出频道信息
     if os.path.exists(user_source_file):
         with open(user_source_file, "r", encoding="utf-8") as file:
             channels = get_channel_data_from_file(
@@ -520,7 +524,7 @@ def append_data_to_info_data(
     for item in data:
         try:
             channel_id = item.get("id") or hash(item["url"])
-            url = item["url"]
+            url: str = item["url"]
             host = item.get("host") or get_url_host(url)
             date = item.get("date")
             delay = item.get("delay")
@@ -533,6 +537,14 @@ def append_data_to_info_data(
             headers = item.get("headers")
             catchup = item.get("catchup")
             extra_info = item.get("extra_info", "")
+
+            # 排除部分链接
+            # 1、公众号 广告
+            # 2、央视官方的加密链接 播放花屏
+            if url.find('公众号') > -1:
+                continue
+            if url.find('https://ldocctv') > -1:
+                continue
 
             if not url_origin or not url:
                 continue
@@ -691,6 +703,8 @@ def append_total_data(
             for value in value_list:
                 if value_ipv_type := value.get("ipv_type", None):
                     url_hosts_ipv_type[get_url_host(value["url"])] = value_ipv_type
+
+    # 输出获取到的频道列表
     for cate, channel_obj in items:
         for name, old_info_list in channel_obj.items():
             print(f"{name}:", end=" ")
